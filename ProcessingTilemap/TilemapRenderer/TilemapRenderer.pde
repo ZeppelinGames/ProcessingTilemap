@@ -82,8 +82,8 @@ void LoadMap(String mapFileName) {
 
     currMap = new Map(mapName, newTiles, mapWidth, mapHeight, spawnPos);
     int scaling = -(spriteScale * spriteSize * cameraZoom);
-    cameraPos = new PVector(int(spawnPos.x * scaling + (width/2) - (spriteSize*cameraZoom)), 
-      int(spawnPos.y * scaling + (height/2) - (spriteSize*cameraZoom)));
+    cameraPos = new PVector(int(spawnPos.x * scaling - (scaling*2)), 
+      int(spawnPos.y * scaling - (scaling*2)));
     println("Set camPos to " + cameraPos);
 
     collisionTiles = new ArrayList<Tile>();

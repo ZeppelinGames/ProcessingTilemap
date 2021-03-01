@@ -14,6 +14,8 @@ ArrayList<Tile> currTiles = new ArrayList<Tile>();
 ArrayList<Tile> collisionTiles = new ArrayList<Tile>();
 ArrayList<Tile> fileTiles = new ArrayList<Tile>();
 
+UIButton[] uiButtons;
+
 PImage playerSprite;
 PImage spriteSheet;
 
@@ -27,6 +29,7 @@ int currDrawTileIndex=0;
 void setup() {
   fullScreen();
   LoadResources();
+  LoadUI();
 }
 
 void LoadResources() {
@@ -41,6 +44,13 @@ void LoadResources() {
     }
   }
   println("Grabbed " + str(spriteAtlas.size()) + " sprites from sprite sheet");
+}
+
+void LoadUI() {
+  uiButtons = new UIButton[] {
+    new UIButton("Save", SaveMap(), new BoundingBox(new PVector(50, 50), new PVector(200, 50))), 
+    new UIButton("Load", "LoadMap", new BoundingBox(new PVector(50, 100), new PVector(200, 50)))
+  };
 }
 
 void LoadMap(String mapFileName) {
@@ -304,6 +314,17 @@ void UpdateUI() {
   DrawImage(spriteAtlas.get(currDrawTileIndex), 10, 10, spriteScale*spriteScale);
   fill(255);
   text(currDrawTileIndex, 10, 10);
+
+  stroke(255);
+  fill(0);
+  for (int n =0; n < uiButtons.length; n++) {
+    BoundingBox currBox = uiButtons[n].box;
+    fill(0);
+    rect(currBox.position.x, currBox.position.y, currBox.size.x, currBox.size.y);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(uiButtons[n].buttonLabel, currBox.position.x + (currBox.size.x/2), currBox.position.y + (currBox.size.y/2));
+  }
 }
 
 void DrawMarker() {
@@ -332,55 +353,92 @@ void mouseWheel(MouseEvent event) {
 }
 
 void mouseClicked() {
-  if (mouseButton == LEFT) {
-    int scaling = spriteScale*cameraZoom*spriteSize;
-    PVector tilePos = new PVector(int((markerPos.x-mapPos.x) / scaling), int((markerPos.y-mapPos.y)/scaling));
+  if (!overUI()) {
+    if (mouseButton == LEFT) {
+      int scaling = spriteScale*cameraZoom*spriteSize;
+      PVector tilePos = new PVector(int((markerPos.x-mapPos.x) / scaling), int((markerPos.y-mapPos.y)/scaling));
 
-    int overlap =0;
-    for (int n =0; n < currTiles.size(); n++) {
-      Tile currTile = currTiles.get(n);
-      int dist = int(sqrt(pow(int(currTile.pos.y - (markerPos.y-mapPos.y)), 2) + (pow(int(currTile.pos.x - (markerPos.x-mapPos.x)), 2))));
-      if (dist < (spriteScale * cameraZoom)) {
-        overlap++;
+      int overlap =0;
+      for (int n =0; n < currTiles.size(); n++) {
+        Tile currTile = currTiles.get(n);
+        int dist = int(sqrt(pow(int(currTile.pos.y - (markerPos.y-mapPos.y)), 2) + (pow(int(currTile.pos.x - (markerPos.x-mapPos.x)), 2))));
+        if (dist < (spriteScale * cameraZoom)) {
+          overlap++;
+        }
       }
-    }
-    int layer = overlap+1;
+      int layer = overlap+1;
 
-    PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
-
-    Tile fileTile = new Tile(currDrawTileIndex, tilePos, layer, false);
-    Tile newTile = new Tile(currDrawTileIndex, newPos, layer, false);
-    currTiles.add(newTile);
-    fileTiles.add(fileTile);
-  }
-
-  if (mouseButton == RIGHT) {
-    ArrayList<Tile> tilesAtPos = new ArrayList<Tile>();
-    for (int n =0; n < currTiles.size(); n++) {
-      Tile currTile = currTiles.get(n);
       PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
-      int dist = int(sqrt(pow(int(currTile.pos.y - newPos.y), 2) + (pow(int(currTile.pos.x - newPos.x), 2))));
-      if (dist < (spriteScale * cameraZoom)) {
-        tilesAtPos.add(currTiles.get(n));
-      }
+
+      Tile fileTile = new Tile(currDrawTileIndex, tilePos, layer, false);
+      Tile newTile = new Tile(currDrawTileIndex, newPos, layer, false);
+      currTiles.add(newTile);
+      fileTiles.add(fileTile);
     }
 
-    if (tilesAtPos.size() > 0) {
-      int highest=0;
-      int highestIndex=0;
-      for (int n =0; n < tilesAtPos.size(); n++) {
-        if (tilesAtPos.get(n).order > highest) {
-          highest =  tilesAtPos.get(n).order;
-          highestIndex = n;
+    if (mouseButton == RIGHT) {
+      ArrayList<Tile> tilesAtPos = new ArrayList<Tile>();
+      for (int n =0; n < currTiles.size(); n++) {
+        Tile currTile = currTiles.get(n);
+        PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
+        int dist = int(sqrt(pow(int(currTile.pos.y - newPos.y), 2) + (pow(int(currTile.pos.x - newPos.x), 2))));
+        if (dist < (spriteScale * cameraZoom)) {
+          tilesAtPos.add(currTiles.get(n));
         }
       }
 
-      Tile removeTile = tilesAtPos.get(highestIndex);
-      currTiles.remove(removeTile);
-      collisionTiles.remove(removeTile);
-      fileTiles.remove(removeTile);
+      if (tilesAtPos.size() > 0) {
+        int highest=0;
+        int highestIndex=0;
+        for (int n =0; n < tilesAtPos.size(); n++) {
+          if (tilesAtPos.get(n).order > highest) {
+            highest =  tilesAtPos.get(n).order;
+            highestIndex = n;
+          }
+        }
+
+        Tile removeTile = tilesAtPos.get(highestIndex);
+        currTiles.remove(removeTile);
+        collisionTiles.remove(removeTile);
+        fileTiles.remove(removeTile);
+      }
+    }
+  } else {
+    UIButton clickedButton = null;
+    for (int n =0; n < uiButtons.length; n++) {
+      BoundingBox box = uiButtons[n].box;
+
+      if (mouseX < box.position.x + box.size.x) {
+        if (mouseX > box.position.x - box.size.x) {
+          if (mouseY < box.position.y + box.size.y) {
+            if (mouseY > box.position.y - box.size.y) {
+              clickedButton = uiButtons[n];
+            }
+          }
+        }
+      }
+    }
+    
+    
+  }
+}
+
+boolean overUI() {
+  boolean isOverUI = false;
+  for (int n =0; n < uiButtons.length; n++) {
+    BoundingBox box = uiButtons[n].box;
+    if (mouseX < box.position.x + box.size.x) {
+      if (mouseX > box.position.x - box.size.x) {
+        if (mouseY < box.position.y + box.size.y) {
+          if (mouseY > box.position.y - box.size.y) {
+            isOverUI = true;
+          }
+        }
+      }
     }
   }
+
+  return isOverUI;
 }
 
 void DrawImage(PImage img, int x, int y, int scale) {
@@ -438,5 +496,27 @@ class Tile {
     this.pos = pos;
     this.order = order;
     this.collider= collider;
+  }
+}
+
+class UIButton {
+  String buttonLabel;
+  String event;
+  BoundingBox box;
+
+  UIButton(String buttonLabel, String event, BoundingBox box) {
+    this.buttonLabel = buttonLabel;
+    this.event = event;
+    this.box = box;
+  }
+}
+
+class BoundingBox {
+  PVector position;
+  PVector size;
+
+  BoundingBox(PVector position, PVector size) {
+    this.position = position;
+    this.size = size;
   }
 }
