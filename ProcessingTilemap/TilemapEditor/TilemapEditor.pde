@@ -109,7 +109,6 @@ void SaveLocation(File selection) {
 
     int mapWidth = 1;
     int mapHeight = 1;
-    PVector spawnPos = new PVector(0, 0);
 
     int left= int(fileTiles.get(0).pos.x);
     int right = int(fileTiles.get(0).pos.x);
@@ -128,6 +127,8 @@ void SaveLocation(File selection) {
 
     mapWidth = right - left +1;
     mapHeight = bottom - top +1;
+
+    PVector spawnPos = new PVector(int(mapWidth/2), int(mapHeight/2));
 
     mapOutput.println("{");
     mapOutput.println("\"mapName\": \"" + mapName + "\",");
@@ -243,8 +244,9 @@ void keyPressed() {
   if (key == 'c') {
     for (int n =0; n < currTiles.size(); n++) {
       Tile currTile = currTiles.get(n);
-      int dist = int(sqrt(pow(int(currTile.pos.y - markerPos.y), 2) + (pow(int(currTile.pos.x - markerPos.x), 2))));
-      if (dist < (spriteScale * cameraZoom)) { 
+      PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
+      int dist = int(sqrt(pow(int(currTile.pos.y - newPos.y), 2) + (pow(int(currTile.pos.x - newPos.x), 2))));
+      if (dist < (spriteScale * cameraZoom)) {
         if (currTile.collider) {
           currTile.collider=false;
           collisionTiles.remove(currTile);
@@ -289,11 +291,12 @@ void DrawTiles() {
       spriteScale * cameraZoom );
   }
 
-int scale = spriteSize*spriteScale * cameraZoom;
+  int scale = spriteScale * cameraZoom;
   for (int n =0; n < collisionTiles.size(); n++) {
-    Tile currTile = currTiles.get(n);
+    Tile currTile = collisionTiles.get(n);
+    stroke(255);
     fill(0, 255, 0, 100);
-    circle(currTile.pos.x + int(scale/2), currTile.pos.y + int(scale/2), int(scale/2));
+    circle(currTile.pos.x + int(scale/2) + mapPos.x, currTile.pos.y + int(scale/2) + mapPos.y, scale);
   }
 }
 
@@ -336,7 +339,7 @@ void mouseClicked() {
     int overlap =0;
     for (int n =0; n < currTiles.size(); n++) {
       Tile currTile = currTiles.get(n);
-      int dist = int(sqrt(pow(int(currTile.pos.y - markerPos.y), 2) + (pow(int(currTile.pos.x - markerPos.x), 2))));
+      int dist = int(sqrt(pow(int(currTile.pos.y - (markerPos.y-mapPos.y)), 2) + (pow(int(currTile.pos.x - (markerPos.x-mapPos.x)), 2))));
       if (dist < (spriteScale * cameraZoom)) {
         overlap++;
       }
