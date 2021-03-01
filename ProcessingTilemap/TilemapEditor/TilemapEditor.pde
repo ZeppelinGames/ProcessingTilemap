@@ -49,16 +49,17 @@ void LoadResources() {
 
 void LoadUI() {
   uiButtons = new UIButton[] {
-    new UIButton("Save", new SaveFunc(), new BoundingBox(new PVector(50, 50), new PVector(200, 50))), 
-    new UIButton("Load", new LoadFunc(), new BoundingBox(new PVector(50, 100), new PVector(200, 50)))
+    new UIButton("Save", new SaveFunc(), new BoundingBox(new PVector(200, 50), new PVector(200, 50))), 
+    new UIButton("Load", new LoadFunc(), new BoundingBox(new PVector(200, 100), new PVector(200, 50)))
   };
 }
 
 void LoadMap() {
-  selectInput("Load map file: ", "fileSelected");
+  selectInput("Load map file: ", "LoadMapFile");
 }
 
 void LoadMapFile(File selection) {
+  println("Loading");
   if (selection == null) {
     println("No file selected");
   } else {
@@ -105,6 +106,7 @@ void SaveMap() {
 }
 
 void SaveLocation(File selection) {
+  println("Saving");
   if (selection != null) {
     String savePath = selection.getAbsolutePath();
     String mapSavePath = savePath.endsWith(".json") ? savePath : savePath + ".json";
@@ -333,10 +335,11 @@ void UpdateUI() {
   for (int n =0; n < uiButtons.length; n++) {
     BoundingBox currBox = uiButtons[n].box;
     fill(0);
+    rectMode(CENTER);
     rect(currBox.position.x, currBox.position.y, currBox.size.x, currBox.size.y);
     fill(255);
     textAlign(CENTER, CENTER);
-    text(uiButtons[n].buttonLabel, currBox.position.x + (currBox.size.x/2), currBox.position.y + (currBox.size.y/2));
+    text(uiButtons[n].buttonLabel, currBox.position.x, currBox.position.y);
   }
 }
 
@@ -421,10 +424,10 @@ void mouseClicked() {
     for (int n =0; n < uiButtons.length; n++) {
       BoundingBox box = uiButtons[n].box;
 
-      if (mouseX < box.position.x + box.size.x) {
-        if (mouseX > box.position.x - box.size.x) {
-          if (mouseY < box.position.y + box.size.y) {
-            if (mouseY > box.position.y - box.size.y) {
+      if (mouseX < box.position.x + (box.size.x)) {
+        if (mouseX > box.position.x - (box.size.x)) {
+          if (mouseY < box.position.y + (box.size.y/2)) {
+            if (mouseY > box.position.y - (box.size.y/2)) {
               clickedButton = uiButtons[n];
             }
           }
