@@ -43,7 +43,7 @@ void LoadResources() {
 }
 
 void LoadMap(String mapFileName) {
-  
+
   String mapFileNameEdited = mapFileName.endsWith(".json") ? mapFileName : mapFileName + ".json";
 
   File mapF = new File(dataPath(mapFileNameEdited));
@@ -137,6 +137,13 @@ void UpdateMovement() {
   if (keyRight) {
     moveX += -1;
   }
+
+  if (moveX !=0) {
+    moveX = moveX > 0 ? 1 : -1;
+  }
+  if (moveY !=0) {
+    moveY = moveY > 0 ? 1 : -1;
+  }
 }
 
 void keyPressed() {
@@ -165,7 +172,7 @@ void CheckCollisions() {
     Tile currTile = collisionTiles.get(n);
     PVector tilePos = new PVector(currTile.pos.x * rePos + mapPos.x, currTile.pos.y * rePos + mapPos.y);
 
-    if (BoxCollision(playerPos, rePPos/2, new PVector(tilePos.x,tilePos.y), rePos)) {
+    if (BoxCollision(playerPos, rePPos/2, new PVector(tilePos.x, tilePos.y), rePos)) {
       PVector dir  = new PVector(ceil(playerPos.x - tilePos.x), ceil(playerPos.y - tilePos.y));
 
       if (dir.x != 0) {
@@ -175,9 +182,11 @@ void CheckCollisions() {
         dir.y = dir.y > 0 ? 1 : -1;
       }
 
-      println(dir);
-      moveX -= dir.x;
-      moveY -= dir.y;
+      moveX = dir.x > 0 && moveX > 0 ? 0 : moveX;
+      moveX = dir.x < 0 && moveX < 0 ? 0 : moveX;
+      
+      moveY = dir.y < 0 && moveY < 0 ? 0 : moveY;
+      moveY = dir.y > 0 && moveY > 0 ? 0 : moveY;
     }
   }
 }
@@ -194,14 +203,14 @@ boolean circleCollision(PVector p1, int p1R, PVector p2, int p2R) {
 
 boolean BoxCollision(PVector p1, int p1WH, PVector p2, int p2WH) { 
   boolean collision =false;
-  if(p1.x < p2.x + p2WH) {
-   if(p1.x + p1WH > p2.x) {
-    if(p1.y < p2.y + p2WH) {
-     if(p1.y + p1WH > p2.y) {
-       collision =true;
-     }
+  if (p1.x < p2.x + p2WH) {
+    if (p1.x + p1WH > p2.x) {
+      if (p1.y < p2.y + p2WH) {
+        if (p1.y + p1WH > p2.y) {
+          collision =true;
+        }
+      }
     }
-   }
   }
   return collision;
 }
