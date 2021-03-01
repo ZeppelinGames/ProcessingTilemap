@@ -307,7 +307,7 @@ void mouseWheel(MouseEvent event) {
 void mouseClicked() {
   if (mouseButton == LEFT) {
     int scaling = spriteScale*cameraZoom*spriteSize;
-    PVector tilePos = new PVector(int(markerPos.x / scaling), int(markerPos.y/scaling));
+    PVector tilePos = new PVector(int((markerPos.x-mapPos.x) / scaling), int((markerPos.y-mapPos.y)/scaling));
 
     int overlap =0;
     for (int n =0; n < currTiles.size(); n++) {

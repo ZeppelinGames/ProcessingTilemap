@@ -24,7 +24,7 @@ int layerMapHeight = 4;
 void setup() {
   fullScreen();
   LoadResources();
-  LoadMap("map_0");
+  LoadMap("island");
 }
 
 void LoadResources() {
