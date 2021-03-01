@@ -154,7 +154,7 @@ void SaveLocation(File selection) {
       output.println("\"posX\":" + int(currTile.pos.x) + ",");
       output.println("\"posY\":" + int(currTile.pos.y) + ",");
       output.println("\"order\":" + currTile.order + ",");
-      output.println("\"collider\":" + currTile.collider);
+      output.println("\"collider\":" + (currTile.collider ? "true" : "false"));
 
       output.print("}");
       if (n != fileTiles.size()-1) {
@@ -248,10 +248,10 @@ void keyPressed() {
       int dist = int(sqrt(pow(int(currTile.pos.y - newPos.y), 2) + (pow(int(currTile.pos.x - newPos.x), 2))));
       if (dist < (spriteScale * cameraZoom)) {
         if (currTile.collider) {
-          currTile.collider=false;
+          fileTiles.get(n).collider= false;
           collisionTiles.remove(currTile);
         } else {
-          currTile.collider =true;
+          fileTiles.get(n).collider= true;
           collisionTiles.add(currTile);
         }
       }

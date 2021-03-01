@@ -24,7 +24,7 @@ int layerMapHeight = 4;
 void setup() {
   fullScreen();
   LoadResources();
-  LoadMap("island");
+  LoadMap("smallIsland");
 }
 
 void LoadResources() {
@@ -157,17 +157,16 @@ void keyPressed() {
 }
 
 void CheckCollisions() {
-  int scale = spriteScale * cameraZoom*2;
   int rePos = (spriteScale*spriteSize*cameraZoom);
+  int rePPos = (playerScale*spriteSize * cameraZoom);
 
   for (int n =0; n < collisionTiles.size(); n++) {
     //Check if colliding 
     Tile currTile = collisionTiles.get(n);
     PVector tilePos = new PVector(currTile.pos.x * rePos + mapPos.x, currTile.pos.y * rePos + mapPos.y);
 
-    if (circleCollision(playerPos, scale*2, tilePos, scale*2)) {
-      println(ceil(playerPos.x - (currTile.pos.x *rePos + mapPos.x)));
-      PVector dir  = new PVector(ceil(playerPos.x - (currTile.pos.x *rePos + mapPos.x)), ceil( playerPos.y - (currTile.pos.y*rePos + mapPos.y)));
+    if (BoxCollision(playerPos, rePPos/2, new PVector(tilePos.x,tilePos.y), rePos)) {
+      PVector dir  = new PVector(ceil(playerPos.x - tilePos.x), ceil(playerPos.y - tilePos.y));
 
       if (dir.x != 0) {
         dir.x  = dir.x > 0 ? 1:-1;
@@ -189,6 +188,20 @@ boolean circleCollision(PVector p1, int p1R, PVector p2, int p2R) {
   boolean collision =false;
   if (dist < p1R + p2R) {
     collision = true;
+  }
+  return collision;
+}
+
+boolean BoxCollision(PVector p1, int p1WH, PVector p2, int p2WH) { 
+  boolean collision =false;
+  if(p1.x < p2.x + p2WH) {
+   if(p1.x + p1WH > p2.x) {
+    if(p1.y < p2.y + p2WH) {
+     if(p1.y + p1WH > p2.y) {
+       collision =true;
+     }
+    }
+   }
   }
   return collision;
 }
