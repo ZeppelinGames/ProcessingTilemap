@@ -22,6 +22,7 @@ int layerMapWidth = 4;
 int layerMapHeight = 4;
 
 void setup() {
+  surface.setTitle("Tilemap Renderer");
   fullScreen();
   LoadResources();
   LoadMap("smallIsland");

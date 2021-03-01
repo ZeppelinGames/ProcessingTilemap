@@ -27,6 +27,7 @@ PVector markerPos = new PVector(0, 0);
 int currDrawTileIndex=0;
 
 void setup() {
+  surface.setTitle("Tilemap Editor");
   fullScreen();
   LoadResources();
   LoadUI();
@@ -48,42 +49,55 @@ void LoadResources() {
 
 void LoadUI() {
   uiButtons = new UIButton[] {
-    new UIButton("Save", SaveMap(), new BoundingBox(new PVector(50, 50), new PVector(200, 50))), 
-    new UIButton("Load", "LoadMap", new BoundingBox(new PVector(50, 100), new PVector(200, 50)))
+    new UIButton("Save", new SaveFunc(), new BoundingBox(new PVector(50, 50), new PVector(200, 50))), 
+    new UIButton("Load", new LoadFunc(), new BoundingBox(new PVector(50, 100), new PVector(200, 50)))
   };
 }
 
-void LoadMap(String mapFileName) {
-  JSONObject mapData = loadJSONObject(mapFileName + ".json");
-  String mapName = mapData.getString("mapName");
-  int mapWidth = mapData.getInt("mapWidth");
-  int mapHeight = mapData.getInt("mapHeight");
+void LoadMap() {
+  selectInput("Load map file: ", "fileSelected");
+}
 
-  int spawnPosX = mapData.getInt("spawnPositionX");
-  int spawnPosY = mapData.getInt("spawnPositionY");
+void LoadMapFile(File selection) {
+  if (selection == null) {
+    println("No file selected");
+  } else {
+    println("User selected " + selection.getAbsolutePath());
 
-  PVector spawnPos = new PVector(spawnPosX, spawnPosY);
+    String mapFileName = selection.getAbsolutePath();
+    mapFileName = mapFileName.replace("tiles", "");
 
-  JSONArray tileData = loadJSONArray(mapFileName + "tiles.json");
+    JSONObject mapData = loadJSONObject(mapFileName + ".json");
+    String mapName = mapData.getString("mapName");
+    int mapWidth = mapData.getInt("mapWidth");
+    int mapHeight = mapData.getInt("mapHeight");
 
-  for (int n =0; n < tileData.size(); n++) {
-    JSONObject tile = tileData.getJSONObject(n); 
+    int spawnPosX = mapData.getInt("spawnPositionX");
+    int spawnPosY = mapData.getInt("spawnPositionY");
 
-    int id = tile.getInt("spriteIndex");
-    int posX = tile.getInt("posX");
-    int posY = tile.getInt("posY");
-    int order = tile.getInt("order");
-    boolean collider =tile.getBoolean("collider");
+    PVector spawnPos = new PVector(spawnPosX, spawnPosY);
 
-    PVector pos = new PVector(posX, posY);
+    JSONArray tileData = loadJSONArray(mapFileName + "tiles.json");
 
-    Tile newTile = new Tile(id, pos, order, collider);
-    currTiles.add(newTile);
+    for (int n =0; n < tileData.size(); n++) {
+      JSONObject tile = tileData.getJSONObject(n); 
+
+      int id = tile.getInt("spriteIndex");
+      int posX = tile.getInt("posX");
+      int posY = tile.getInt("posY");
+      int order = tile.getInt("order");
+      boolean collider =tile.getBoolean("collider");
+
+      PVector pos = new PVector(posX, posY);
+
+      Tile newTile = new Tile(id, pos, order, collider);
+      currTiles.add(newTile);
+    }
+
+    Tile[] tileArray = new Tile[currTiles.size()];
+    tileArray = currTiles.toArray(tileArray);
+    currMap = new Map(mapName, tileArray, mapWidth, mapHeight, spawnPos);
   }
-
-  Tile[] tileArray = new Tile[currTiles.size()];
-  tileArray = currTiles.toArray(tileArray);
-  currMap = new Map(mapName, tileArray, mapWidth, mapHeight, spawnPos);
 }
 
 void SaveMap() {
@@ -187,7 +201,6 @@ void draw() {
   DrawMarker();
   UpdateUI();
 }
-
 
 boolean ctrlPressed=false;
 boolean keyUp, keyDown, keyLeft, keyRight;
@@ -418,8 +431,19 @@ void mouseClicked() {
         }
       }
     }
-    
-    
+
+    if (clickedButton != null) {
+      //Call void
+      try {
+        LoadFunc l = LoadFunc.class.cast(clickedButton.event);
+        l.run();
+      } 
+      catch(Exception e) {}
+      try {
+       SaveFunc s = SaveFunc.class.cast(clickedButton.event);
+       s.run();
+      } catch(Exception e) {}
+    }
   }
 }
 
@@ -501,10 +525,10 @@ class Tile {
 
 class UIButton {
   String buttonLabel;
-  String event;
+  Object event;
   BoundingBox box;
 
-  UIButton(String buttonLabel, String event, BoundingBox box) {
+  UIButton(String buttonLabel, Object event, BoundingBox box) {
     this.buttonLabel = buttonLabel;
     this.event = event;
     this.box = box;
@@ -518,5 +542,17 @@ class BoundingBox {
   BoundingBox(PVector position, PVector size) {
     this.position = position;
     this.size = size;
+  }
+}
+
+class SaveFunc {
+  void run() {
+    SaveMap();
+  }
+}
+
+class LoadFunc {
+  void run() {
+    LoadMap();
   }
 }
