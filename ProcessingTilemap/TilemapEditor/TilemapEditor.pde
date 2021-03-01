@@ -11,6 +11,7 @@ ArrayList<PImage> spriteAtlas = new ArrayList<PImage>(); //[Images from sprite s
 
 Map currMap;
 ArrayList<Tile> currTiles = new ArrayList<Tile>();
+ArrayList<Tile> collisionTiles = new ArrayList<Tile>();
 ArrayList<Tile> fileTiles = new ArrayList<Tile>();
 
 PImage playerSprite;
@@ -238,6 +239,22 @@ void keyPressed() {
   if (key == 'd' || keyCode == RIGHT) {
     keyRight=true;
   }
+
+  if (key == 'c') {
+    for (int n =0; n < currTiles.size(); n++) {
+      Tile currTile = currTiles.get(n);
+      int dist = int(sqrt(pow(int(currTile.pos.y - markerPos.y), 2) + (pow(int(currTile.pos.x - markerPos.x), 2))));
+      if (dist < (spriteScale * cameraZoom)) { 
+        if (currTile.collider) {
+          currTile.collider=false;
+          collisionTiles.remove(currTile);
+        } else {
+          currTile.collider =true;
+          collisionTiles.add(currTile);
+        }
+      }
+    }
+  }
 }
 
 void keyReleased() {
@@ -270,6 +287,13 @@ void DrawTiles() {
       int(currTile.pos.x + mapPos.x), 
       int(currTile.pos.y + mapPos.y), 
       spriteScale * cameraZoom );
+  }
+
+int scale = spriteSize*spriteScale * cameraZoom;
+  for (int n =0; n < collisionTiles.size(); n++) {
+    Tile currTile = currTiles.get(n);
+    fill(0, 255, 0, 100);
+    circle(currTile.pos.x + int(scale/2), currTile.pos.y + int(scale/2), int(scale/2));
   }
 }
 
@@ -348,9 +372,10 @@ void mouseClicked() {
         }
       }
 
-      int removeIndex = currTiles.indexOf(tilesAtPos.get(highestIndex));
-      currTiles.remove(removeIndex);
-      fileTiles.remove(removeIndex);
+      Tile removeTile = tilesAtPos.get(highestIndex);
+      currTiles.remove(removeTile);
+      collisionTiles.remove(removeTile);
+      fileTiles.remove(removeTile);
     }
   }
 }
