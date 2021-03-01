@@ -2,7 +2,6 @@ PVector mapPos = new PVector(0, 0);
 PVector cameraPos = new PVector(0, 0);
 int cameraZoom = 5;
 int moveSpeed =3;
-PVector playerPos = new PVector(0, 0);
 int alphaClipThreshold = 20;
 
 int spriteScale = 2; //Drawing scale
@@ -30,7 +29,6 @@ void setup() {
 }
 
 void LoadResources() {
-  playerSprite = loadImage("playerSprite.png");
   spriteSheet = loadImage("Tileset2.png");
 
   println("Sprite sheet: " + spriteSheet.width + "x" + spriteSheet.height);
@@ -102,8 +100,8 @@ void SaveLocation(File selection) {
     PrintWriter mapOutput =  createWriter(mapSavePath);
 
     mapNameFile = savePath.substring(savePath.lastIndexOf('\\')+1);
-    if(mapNameFile.contains(".")) {
-      mapNameFile = mapNameFile.substring(0,mapNameFile.indexOf('.')-1);
+    if (mapNameFile.contains(".")) {
+      mapNameFile = mapNameFile.substring(0, mapNameFile.indexOf('.')-1);
     } 
     String mapName = mapNameFile;
     println(mapName);
@@ -170,6 +168,9 @@ void SaveLocation(File selection) {
 
 void draw() {
   clear();
+  UpdateMovement();
+  UpdateCameraPosition();
+  UpdateMapPosition();
   DrawTiles();
   DrawMarker();
   UpdateUI();
@@ -177,16 +178,43 @@ void draw() {
 
 
 boolean ctrlPressed=false;
+boolean keyUp, keyDown, keyLeft, keyRight;
+
+int moveX =0;
+int moveY =0;
+void UpdateMovement() {   
+  moveX = 0;
+  moveY =0;
+  if (keyUp) {
+    moveY += 1;
+  }
+  if (keyDown) {
+    moveY += -1;
+  }
+  if (keyLeft) {
+    moveX += 1;
+  }
+  if (keyRight) {
+    moveX += -1;
+  }
+}
+
+void UpdateCameraPosition() {
+  int mX = moveX * moveSpeed;
+  int mY = moveY * moveSpeed;
+
+  cameraPos = new PVector(cameraPos.x + mX, cameraPos.y + mY);
+}
+
+void UpdateMapPosition() {
+  mapPos = new PVector(cameraPos.x, cameraPos.y);
+}
+
 void keyPressed() {
   if (key == CODED) {
     if (keyCode == CONTROL) {
-      println("control pressed");
       ctrlPressed = true;
     }
-  }
-
-  if (keyCode == 83) {
-    println("s pressed");
   }
 
   if (ctrlPressed) {
@@ -194,6 +222,21 @@ void keyPressed() {
       println("SAVING");
       SaveMap();
     }
+  }
+
+  if (key == 'w' || keyCode == UP) {
+    keyUp=true;
+  }
+  if (key == 's' || keyCode == DOWN) {
+    keyDown=true;
+  }
+
+  if (key == 'a' || keyCode == LEFT) {
+    keyLeft=true;
+  }
+
+  if (key == 'd' || keyCode == RIGHT) {
+    keyRight=true;
   }
 }
 
@@ -203,12 +246,30 @@ void keyReleased() {
       ctrlPressed = false;
     }
   }
+
+  if (key == 'w' || keyCode == UP) {
+    keyUp=false;
+  }
+  if (key == 's' || keyCode == DOWN) {
+    keyDown=false;
+  }
+
+  if (key == 'a' || keyCode == LEFT) {
+    keyLeft=false;
+  }
+
+  if (key == 'd' || keyCode == RIGHT) {
+    keyRight=false;
+  }
 }
 
 void DrawTiles() {
   for (int n =0; n < currTiles.size(); n++) {
     Tile currTile = currTiles.get(n);
-    DrawImage(spriteAtlas.get(currTile.sprite), int(currTile.pos.x), int(currTile.pos.y), spriteScale * cameraZoom );
+    DrawImage(spriteAtlas.get(currTile.sprite), 
+      int(currTile.pos.x + mapPos.x), 
+      int(currTile.pos.y + mapPos.y), 
+      spriteScale * cameraZoom );
   }
 }
 
@@ -221,15 +282,18 @@ void UpdateUI() {
 void DrawMarker() {
   stroke(color(255, 255, 255, 255));
   noFill();
-  square(markerPos.x, markerPos.y, spriteScale*cameraZoom*spriteSize);
-}
 
-void mouseMoved() {
   int scaling = spriteScale*cameraZoom*spriteSize;
-  int mX = int(mouseX / scaling) * scaling;
-  int mY =  int(mouseY / scaling) * scaling;
+
+  float mapSX = int(mapPos.x % scaling); 
+  float mapSY = int(mapPos.y  % scaling);
+
+  int mX = int((mouseX) / (scaling)) * int(scaling) + int(mapSX);
+  int mY =  int((mouseY) / (scaling)) * int(scaling) + int(mapSY);
 
   markerPos = new PVector(mX, mY);
+
+  square(markerPos.x, markerPos.y, spriteScale*cameraZoom*spriteSize);
 }
 
 void mouseWheel(MouseEvent event) {
@@ -255,8 +319,10 @@ void mouseClicked() {
     }
     int layer = overlap+1;
 
+    PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
+
     Tile fileTile = new Tile(currDrawTileIndex, tilePos, layer, false);
-    Tile newTile = new Tile(currDrawTileIndex, markerPos, layer, false);
+    Tile newTile = new Tile(currDrawTileIndex, newPos, layer, false);
     currTiles.add(newTile);
     fileTiles.add(fileTile);
   }
@@ -265,7 +331,8 @@ void mouseClicked() {
     ArrayList<Tile> tilesAtPos = new ArrayList<Tile>();
     for (int n =0; n < currTiles.size(); n++) {
       Tile currTile = currTiles.get(n);
-      int dist = int(sqrt(pow(int(currTile.pos.y - markerPos.y), 2) + (pow(int(currTile.pos.x - markerPos.x), 2))));
+      PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
+      int dist = int(sqrt(pow(int(currTile.pos.y - newPos.y), 2) + (pow(int(currTile.pos.x - newPos.x), 2))));
       if (dist < (spriteScale * cameraZoom)) {
         tilesAtPos.add(currTiles.get(n));
       }
