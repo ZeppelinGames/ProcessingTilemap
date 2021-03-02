@@ -22,6 +22,8 @@ PImage spriteSheet;
 int layerMapWidth = 4;
 int layerMapHeight = 4;
 
+boolean finishedLoading =false;
+
 void setup() {
   surface.setTitle("Tilemap Renderer");
   fullScreen();
@@ -62,8 +64,8 @@ void LoadMap(File mapFile) {
   } else {
     String mapFileName = mapFile.getAbsolutePath();
     mapFileName = mapFileName.substring(mapFileName.lastIndexOf('\\'));
-    mapFileName = mapFileName.replace(".json","");
-    mapFileName  = mapFileName.replace("tiles","");
+    mapFileName = mapFileName.replace(".json", "");
+    mapFileName  = mapFileName.replace("tiles", "");
     String mapFileNameEdited = mapFileName.endsWith(".json") ? mapFileName : mapFileName + ".json";
 
     File mapF = new File(dataPath(mapFileNameEdited));
@@ -122,6 +124,7 @@ void LoadMap(File mapFile) {
         Tile currTile = currMap.tiles[n];
         layers[currTile.order].tiles.add(currTile);
       }
+      finishedLoading = true;
     } else
     {
       println("[ERROR] Unable to load map");
@@ -132,13 +135,15 @@ void LoadMap(File mapFile) {
 int moveX =0;
 int moveY =0;
 void draw() {
-  clear();
-  UpdateMovement();
-  CheckCollisions();
-  UpdateCameraPosition();
-  UpdateMapPosition();
-  DrawLayers();
-  DrawPlayer();
+  if (finishedLoading) {
+    clear();
+    UpdateMovement();
+    CheckCollisions();
+    UpdateCameraPosition();
+    UpdateMapPosition();
+    DrawLayers();
+    DrawPlayer();
+  }
 }
 
 boolean keyUp, keyDown, keyLeft, keyRight;
