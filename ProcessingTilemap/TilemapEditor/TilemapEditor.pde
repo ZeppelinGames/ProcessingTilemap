@@ -94,13 +94,14 @@ void LoadMap(File mapFile) {
 
         Tile newTile = new Tile(id, pos, order, collider);
         fileTiles.add(newTile);
-        if (newTile.collider) {
-          collisionTiles.add(newTile);
-        }
+        
         
         int scale = (cameraZoom * spriteScale * spriteSize);
         Tile newCurrTile = new Tile(id, new PVector(pos.x * scale , pos.y * scale),order,collider);
         currTiles.add(newCurrTile);
+        if (newTile.collider) {
+          collisionTiles.add(newCurrTile);
+        }
       }
 
       Tile[] tileArray = new Tile[currTiles.size()];
