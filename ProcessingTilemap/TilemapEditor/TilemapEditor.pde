@@ -61,6 +61,10 @@ void LoadMapFile() {
 void LoadMap(File mapFile) {
   if (mapFile == null) {
   } else {
+    currTiles.clear();
+    fileTiles.clear();
+    collisionTiles.clear();
+    
     String mapFileName = mapFile.getAbsolutePath();
     mapFileName = mapFileName.substring(mapFileName.lastIndexOf('\\')+1);
     mapFileName = mapFileName.replace(".json", "");
@@ -88,18 +92,18 @@ void LoadMap(File mapFile) {
         int posX = tile.getInt("posX");
         int posY = tile.getInt("posY");
         int order = tile.getInt("order");
-        boolean collider =tile.getBoolean("collider");
+        boolean collider = tile.getBoolean("collider");
 
         PVector pos = new PVector(posX, posY);
 
         Tile newTile = new Tile(id, pos, order, collider);
         fileTiles.add(newTile);
         
-        
         int scale = (cameraZoom * spriteScale * spriteSize);
         Tile newCurrTile = new Tile(id, new PVector(pos.x * scale , pos.y * scale),order,collider);
         currTiles.add(newCurrTile);
-        if (newTile.collider) {
+        
+        if (collider) {
           collisionTiles.add(newCurrTile);
         }
       }
@@ -284,10 +288,10 @@ void keyPressed() {
       int dist = int(sqrt(pow(int(currTile.pos.y - newPos.y), 2) + (pow(int(currTile.pos.x - newPos.x), 2))));
       if (dist < (spriteScale * cameraZoom)) {
         if (currTile.collider) {
-          fileTiles.get(n).collider= false;
+          currTiles.get(n).collider = false;
           collisionTiles.remove(currTile);
         } else {
-          fileTiles.get(n).collider= true;
+          currTiles.get(n).collider= true;
           collisionTiles.add(currTile);
         }
       }
@@ -398,26 +402,7 @@ void mouseClicked() {
         }
       }
       int layer = overlap+1;
-      boolean sameTile=false;
 
-      for (int n =0; n < overLapTiles.size(); n++) {
-        for (int  i=0; i < overLapTiles.size(); i++) {
-          if (overLapTiles.get(n).pos == overLapTiles.get(i).pos) {
-            sameTile=true;
-          }
-        }
-      }
-
-      if (overlap > 0) {
-        if (sameTile) {
-          for (int n =0; n < overLapTiles.size(); n++) {
-            Tile currTile = overLapTiles.get(n);
-            fileTiles.remove(currTile);
-            currTiles.remove(currTile);
-            println(currTile);
-          }
-        }
-      }
       PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
 
       Tile fileTile = new Tile(currDrawTileIndex, tilePos, layer, false);
