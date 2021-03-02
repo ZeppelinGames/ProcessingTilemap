@@ -10,6 +10,7 @@ int spriteScale = 2; //Drawing scale
 
 int spriteSize = 8; //Atlas size
 ArrayList<PImage> spriteAtlas = new ArrayList<PImage>(); //[Images from sprite sheet]
+ArrayList<PImage> playerAtlas = new ArrayList<PImage>();
 Map currMap;
 //ArrayList<Layer> layers = new ArrayList<Layer>();
 Layer[] layers;
@@ -25,14 +26,23 @@ void setup() {
   surface.setTitle("Tilemap Renderer");
   fullScreen();
   LoadResources();
-  LoadMap("smallIsland");
+  LoadMap("islan");
 }
 
 void LoadResources() {
   playerSprite = loadImage("playerSprite.png");
   spriteSheet = loadImage("Tileset2.png");
 
+PImage playerSpriteSheet = loadImage("playerSpriteSheet.png");
+
   println("Sprite sheet: " + spriteSheet.width + "x" + spriteSheet.height);
+
+ for (int y=0; y < playerSpriteSheet.height; y+=spriteSize) {
+    for (int x =0; x < playerSpriteSheet.width; x+=spriteSize) {
+      PImage newSprite = playerSpriteSheet.get(x, y, spriteSize, spriteSize);
+      playerAtlas.add(newSprite);
+    }
+  }
 
   for (int y=0; y < spriteSheet.height; y+=spriteSize) {
     for (int x =0; x <spriteSheet.width; x+=spriteSize) {
@@ -259,7 +269,17 @@ void DrawLayers() {
 void DrawPlayer() {
   int scaling = ((spriteScale * spriteSize * cameraZoom)/2);
   playerPos = new PVector((width/2) - scaling, (height/2)- scaling);
-  DrawImage(playerSprite, int(playerPos.x), int(playerPos.y), (playerScale*cameraZoom));
+  
+  
+  //Idle =0, up = 1, down =2, left =3, right =4
+  PImage pSprite = playerAtlas.get(0); //Idle
+  
+  pSprite  = keyLeft ? playerAtlas.get(3) : pSprite;
+  pSprite = keyRight ? playerAtlas.get(4) : pSprite;
+  pSprite = keyUp ? playerAtlas.get(1) : pSprite;
+  pSprite = keyDown ? playerAtlas.get(2) : pSprite;
+  
+  DrawImage(pSprite, int(playerPos.x), int(playerPos.y), (playerScale*cameraZoom));
 }
 
 void DrawImage(PImage img, int x, int y, int scale) {

@@ -170,6 +170,7 @@ void SaveLocation(File selection) {
 
 
     //Write json data
+    println("Writing " + fileTiles.size() + " tiles to file");
     PrintWriter output = createWriter(tilesSavePath);
     output.println("[");
     for (int n =0; n < fileTiles.size(); n++) {
@@ -341,6 +342,8 @@ void UpdateUI() {
     textAlign(CENTER, CENTER);
     text(uiButtons[n].buttonLabel, currBox.position.x, currBox.position.y);
   }
+
+  rectMode(CORNER);
 }
 
 void DrawMarker() {
@@ -374,16 +377,37 @@ void mouseClicked() {
       int scaling = spriteScale*cameraZoom*spriteSize;
       PVector tilePos = new PVector(int((markerPos.x-mapPos.x) / scaling), int((markerPos.y-mapPos.y)/scaling));
 
+      ArrayList<Tile> overLapTiles = new ArrayList<Tile>();
       int overlap =0;
       for (int n =0; n < currTiles.size(); n++) {
         Tile currTile = currTiles.get(n);
         int dist = int(sqrt(pow(int(currTile.pos.y - (markerPos.y-mapPos.y)), 2) + (pow(int(currTile.pos.x - (markerPos.x-mapPos.x)), 2))));
         if (dist < (spriteScale * cameraZoom)) {
           overlap++;
+          overLapTiles.add(currTile);
         }
       }
       int layer = overlap+1;
+      boolean sameTile=false;
 
+      for (int n =0; n < overLapTiles.size(); n++) {
+        for (int  i=0; i < overLapTiles.size(); i++) {
+          if (overLapTiles.get(n).pos == overLapTiles.get(i).pos) {
+            sameTile=true;
+          }
+        }
+      }
+
+      if (overlap > 0) {
+        if (sameTile) {
+          for (int n =0; n < overLapTiles.size(); n++) {
+            Tile currTile = overLapTiles.get(n);
+            fileTiles.remove(currTile);
+            currTiles.remove(currTile);
+            println(currTile);
+          }
+        }
+      }
       PVector newPos = new PVector(markerPos.x - mapPos.x, markerPos.y - mapPos.y);
 
       Tile fileTile = new Tile(currDrawTileIndex, tilePos, layer, false);
@@ -441,11 +465,14 @@ void mouseClicked() {
         LoadFunc l = LoadFunc.class.cast(clickedButton.event);
         l.run();
       } 
-      catch(Exception e) {}
+      catch(Exception e) {
+      }
       try {
-       SaveFunc s = SaveFunc.class.cast(clickedButton.event);
-       s.run();
-      } catch(Exception e) {}
+        SaveFunc s = SaveFunc.class.cast(clickedButton.event);
+        s.run();
+      } 
+      catch(Exception e) {
+      }
     }
   }
 }
