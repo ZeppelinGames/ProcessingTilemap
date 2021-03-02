@@ -26,18 +26,18 @@ void setup() {
   surface.setTitle("Tilemap Renderer");
   fullScreen();
   LoadResources();
-  LoadMap("islan");
+  LoadMapFile();
 }
 
 void LoadResources() {
   playerSprite = loadImage("playerSprite.png");
   spriteSheet = loadImage("Tileset2.png");
 
-PImage playerSpriteSheet = loadImage("playerSpriteSheet.png");
+  PImage playerSpriteSheet = loadImage("playerSpriteSheet.png");
 
   println("Sprite sheet: " + spriteSheet.width + "x" + spriteSheet.height);
 
- for (int y=0; y < playerSpriteSheet.height; y+=spriteSize) {
+  for (int y=0; y < playerSpriteSheet.height; y+=spriteSize) {
     for (int x =0; x < playerSpriteSheet.width; x+=spriteSize) {
       PImage newSprite = playerSpriteSheet.get(x, y, spriteSize, spriteSize);
       playerAtlas.add(newSprite);
@@ -53,69 +53,79 @@ PImage playerSpriteSheet = loadImage("playerSpriteSheet.png");
   println("Grabbed " + str(spriteAtlas.size()) + " sprites from sprite sheet");
 }
 
-void LoadMap(String mapFileName) {
+void LoadMapFile() {
+  selectInput("Load map file: ", "LoadMap");
+}
 
-  String mapFileNameEdited = mapFileName.endsWith(".json") ? mapFileName : mapFileName + ".json";
+void LoadMap(File mapFile) {
+  if (mapFile == null) {
+  } else {
+    String mapFileName = mapFile.getAbsolutePath();
+    mapFileName = mapFileName.substring(mapFileName.lastIndexOf('\\'));
+    mapFileName = mapFileName.replace(".json","");
+    mapFileName  = mapFileName.replace("tiles","");
+    String mapFileNameEdited = mapFileName.endsWith(".json") ? mapFileName : mapFileName + ".json";
 
-  File mapF = new File(dataPath(mapFileNameEdited));
-  if (mapF.exists()) {
-    JSONObject mapData = loadJSONObject(mapFileNameEdited);
-    String mapName = mapData.getString("mapName");
-    int mapWidth = mapData.getInt("mapWidth");
-    int mapHeight = mapData.getInt("mapHeight");
+    File mapF = new File(dataPath(mapFileNameEdited));
+    if (mapF.exists()) {
+      JSONObject mapData = loadJSONObject(mapFileNameEdited);
+      String mapName = mapData.getString("mapName");
+      int mapWidth = mapData.getInt("mapWidth");
+      int mapHeight = mapData.getInt("mapHeight");
 
-    int spawnPosX = mapData.getInt("spawnPositionX");
-    int spawnPosY = mapData.getInt("spawnPositionY");
+      int spawnPosX = mapData.getInt("spawnPositionX");
+      int spawnPosY = mapData.getInt("spawnPositionY");
 
-    PVector spawnPos = new PVector(spawnPosX, spawnPosY);
+      PVector spawnPos = new PVector(spawnPosX, spawnPosY);
 
-    JSONArray tileData = loadJSONArray(mapFileName + "tiles.json");
-    Tile[] newTiles = new Tile[tileData.size()];
-    int highestLayer=0;
+      JSONArray tileData = loadJSONArray(mapFileName + "tiles.json");
+      Tile[] newTiles = new Tile[tileData.size()];
+      int highestLayer=0;
 
-    for (int n =0; n < tileData.size(); n++) {
-      JSONObject tile = tileData.getJSONObject(n); 
+      for (int n =0; n < tileData.size(); n++) {
+        JSONObject tile = tileData.getJSONObject(n); 
 
-      int id = tile.getInt("spriteIndex");
-      int posX = tile.getInt("posX");
-      int posY = tile.getInt("posY");
-      int order = tile.getInt("order");
-      boolean collider =tile.getBoolean("collider");
+        int id = tile.getInt("spriteIndex");
+        int posX = tile.getInt("posX");
+        int posY = tile.getInt("posY");
+        int order = tile.getInt("order");
+        boolean collider =tile.getBoolean("collider");
 
-      PVector pos = new PVector(posX, posY);
+        PVector pos = new PVector(posX, posY);
 
-      if (order > highestLayer) {
-        highestLayer = order;
+        if (order > highestLayer) {
+          highestLayer = order;
+        }
+
+        newTiles[n] = new Tile(id, pos, order, collider);
       }
 
-      newTiles[n] = new Tile(id, pos, order, collider);
-    }
+      currMap = new Map(mapName, newTiles, mapWidth, mapHeight, spawnPos);
+      int scaling = -(spriteScale * spriteSize * cameraZoom);
+      cameraPos = new PVector(int(spawnPos.x * scaling - (scaling*2)), 
+        int(spawnPos.y * scaling - (scaling*2)));
+      println("Set camPos to " + cameraPos);
 
-    currMap = new Map(mapName, newTiles, mapWidth, mapHeight, spawnPos);
-    int scaling = -(spriteScale * spriteSize * cameraZoom);
-    cameraPos = new PVector(int(spawnPos.x * scaling - (scaling*2)), 
-      int(spawnPos.y * scaling - (scaling*2)));
-    println("Set camPos to " + cameraPos);
-
-    collisionTiles = new ArrayList<Tile>();
-    for (int n =0; n < currMap.tiles.length; n++) {
-      if (currMap.tiles[n].collider) {
-        collisionTiles.add(currMap.tiles[n]);
+      collisionTiles = new ArrayList<Tile>();
+      for (int n =0; n < currMap.tiles.length; n++) {
+        if (currMap.tiles[n].collider) {
+          collisionTiles.add(currMap.tiles[n]);
+        }
       }
-    }
 
-    layers = new Layer[highestLayer+1];
-    for (int n =0; n < layers.length; n++) {
-      layers[n] = new Layer(new ArrayList<Tile>());
-    }
+      layers = new Layer[highestLayer+1];
+      for (int n =0; n < layers.length; n++) {
+        layers[n] = new Layer(new ArrayList<Tile>());
+      }
 
-    for (int n=0; n < currMap.tiles.length; n++) {
-      Tile currTile = currMap.tiles[n];
-      layers[currTile.order].tiles.add(currTile);
+      for (int n=0; n < currMap.tiles.length; n++) {
+        Tile currTile = currMap.tiles[n];
+        layers[currTile.order].tiles.add(currTile);
+      }
+    } else
+    {
+      println("[ERROR] Unable to load map");
     }
-  } else
-  {
-    println("[ERROR] Unable to load map");
   }
 }
 
@@ -195,7 +205,7 @@ void CheckCollisions() {
 
       moveX = dir.x > 0 && moveX > 0 ? 0 : moveX;
       moveX = dir.x < 0 && moveX < 0 ? 0 : moveX;
-      
+
       moveY = dir.y < 0 && moveY < 0 ? 0 : moveY;
       moveY = dir.y > 0 && moveY > 0 ? 0 : moveY;
     }
@@ -269,16 +279,15 @@ void DrawLayers() {
 void DrawPlayer() {
   int scaling = ((spriteScale * spriteSize * cameraZoom)/2);
   playerPos = new PVector((width/2) - scaling, (height/2)- scaling);
-  
-  
+
   //Idle =0, up = 1, down =2, left =3, right =4
   PImage pSprite = playerAtlas.get(0); //Idle
-  
+
   pSprite  = keyLeft ? playerAtlas.get(3) : pSprite;
   pSprite = keyRight ? playerAtlas.get(4) : pSprite;
   pSprite = keyUp ? playerAtlas.get(1) : pSprite;
   pSprite = keyDown ? playerAtlas.get(2) : pSprite;
-  
+
   DrawImage(pSprite, int(playerPos.x), int(playerPos.y), (playerScale*cameraZoom));
 }
 
