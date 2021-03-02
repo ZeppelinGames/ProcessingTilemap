@@ -54,50 +54,59 @@ void LoadUI() {
   };
 }
 
-void LoadMap() {
-  selectInput("Load map file: ", "LoadMapFile");
+void LoadMapFile() {
+  selectInput("Load map file: ", "LoadMap");
 }
 
-void LoadMapFile(File selection) {
-  println("Loading");
-  if (selection == null) {
-    println("No file selected");
+void LoadMap(File mapFile) {
+  if (mapFile == null) {
   } else {
-    println("User selected " + selection.getAbsolutePath());
+    String mapFileName = mapFile.getAbsolutePath();
+    mapFileName = mapFileName.substring(mapFileName.lastIndexOf('\\')+1);
+    mapFileName = mapFileName.replace(".json", "");
+    mapFileName  = mapFileName.replace("tiles", "");
+    String mapFileNameEdited = mapFileName.endsWith(".json") ? mapFileName : mapFileName + ".json";
 
-    String mapFileName = selection.getAbsolutePath();
-    mapFileName = mapFileName.replace("tiles", "");
+    File mapF = new File(dataPath(mapFileNameEdited));
+    if (mapF.exists()) {
+      JSONObject mapData = loadJSONObject(mapFileNameEdited);
+      String mapName = mapData.getString("mapName");
+      int mapWidth = mapData.getInt("mapWidth");
+      int mapHeight = mapData.getInt("mapHeight");
 
-    JSONObject mapData = loadJSONObject(mapFileName + ".json");
-    String mapName = mapData.getString("mapName");
-    int mapWidth = mapData.getInt("mapWidth");
-    int mapHeight = mapData.getInt("mapHeight");
+      int spawnPosX = mapData.getInt("spawnPositionX");
+      int spawnPosY = mapData.getInt("spawnPositionY");
 
-    int spawnPosX = mapData.getInt("spawnPositionX");
-    int spawnPosY = mapData.getInt("spawnPositionY");
+      PVector spawnPos = new PVector(spawnPosX, spawnPosY);
 
-    PVector spawnPos = new PVector(spawnPosX, spawnPosY);
+      JSONArray tileData = loadJSONArray(mapFileName + "tiles.json");
 
-    JSONArray tileData = loadJSONArray(mapFileName + "tiles.json");
+      for (int n =0; n < tileData.size(); n++) {
+        JSONObject tile = tileData.getJSONObject(n); 
 
-    for (int n =0; n < tileData.size(); n++) {
-      JSONObject tile = tileData.getJSONObject(n); 
+        int id = tile.getInt("spriteIndex");
+        int posX = tile.getInt("posX");
+        int posY = tile.getInt("posY");
+        int order = tile.getInt("order");
+        boolean collider =tile.getBoolean("collider");
 
-      int id = tile.getInt("spriteIndex");
-      int posX = tile.getInt("posX");
-      int posY = tile.getInt("posY");
-      int order = tile.getInt("order");
-      boolean collider =tile.getBoolean("collider");
+        PVector pos = new PVector(posX, posY);
 
-      PVector pos = new PVector(posX, posY);
+        Tile newTile = new Tile(id, pos, order, collider);
+        fileTiles.add(newTile);
+        if (newTile.collider) {
+          collisionTiles.add(newTile);
+        }
+        
+        int scale = (cameraZoom * spriteScale * spriteSize);
+        Tile newCurrTile = new Tile(id, new PVector(pos.x * scale , pos.y * scale),order,collider);
+        currTiles.add(newCurrTile);
+      }
 
-      Tile newTile = new Tile(id, pos, order, collider);
-      currTiles.add(newTile);
+      Tile[] tileArray = new Tile[currTiles.size()];
+      tileArray = currTiles.toArray(tileArray);
+      currMap = new Map(mapName, tileArray, mapWidth, mapHeight, spawnPos);
     }
-
-    Tile[] tileArray = new Tile[currTiles.size()];
-    tileArray = currTiles.toArray(tileArray);
-    currMap = new Map(mapName, tileArray, mapWidth, mapHeight, spawnPos);
   }
 }
 
@@ -583,6 +592,6 @@ class SaveFunc {
 
 class LoadFunc {
   void run() {
-    LoadMap();
+    LoadMapFile();
   }
 }

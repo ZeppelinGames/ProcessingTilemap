@@ -63,7 +63,7 @@ void LoadMap(File mapFile) {
   if (mapFile == null) {
   } else {
     String mapFileName = mapFile.getAbsolutePath();
-    mapFileName = mapFileName.substring(mapFileName.lastIndexOf('\\'));
+    mapFileName = mapFileName.substring(mapFileName.lastIndexOf('\\')+1);
     mapFileName = mapFileName.replace(".json", "");
     mapFileName  = mapFileName.replace("tiles", "");
     String mapFileNameEdited = mapFileName.endsWith(".json") ? mapFileName : mapFileName + ".json";
