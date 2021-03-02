@@ -201,18 +201,41 @@ void CheckCollisions() {
     if (BoxCollision(playerPos, rePPos/2, new PVector(tilePos.x, tilePos.y), rePos)) {
       PVector dir  = new PVector(ceil(playerPos.x - tilePos.x), ceil(playerPos.y - tilePos.y));
 
-      if (dir.x != 0) {
-        dir.x  = dir.x > 0 ? 1:-1;
+      /*      if (dir.x != 0) {
+       dir.x  = dir.x > 0 ? 1:-1;
+       }
+       if (dir.y != 0) {
+       dir.y = dir.y > 0 ? 1 : -1;
+       } */
+       
+       dir.x = dir.x != 0 && dir.x > 0 ? 1 : -1;
+       dir.y  = dir.y != 0 && dir.y > 0 ? 1 : -1;
+
+      if (dir.x > 0) {
+        if (dir.y > 0) {
+          if (dir.x > dir.y) {
+            dir.y = 0;
+          }
+          if(dir.y > dir.x) {
+           dir.x = 0; 
+          }
+        }
       }
-      if (dir.y != 0) {
-        dir.y = dir.y > 0 ? 1 : -1;
-      }
+      
+      dir.x = dir.x > 0 && dir.y > 0 && dir.y > dir.x ? 0 : dir.x;
+      dir.y = dir.x > 0 && dir.y > 0 && dir.x > dir.y ? 0 : dir.y;
+      
+      dir.x = dir.x < 0 && dir.y < 0 && dir.y < dir.x ? 0 : dir.x;
+      dir.y = dir.x < 0 && dir.y < 0 && dir.x < dir.y ? 0 : dir.y;
+      
 
       moveX = dir.x > 0 && moveX > 0 ? 0 : moveX;
       moveX = dir.x < 0 && moveX < 0 ? 0 : moveX;
 
       moveY = dir.y < 0 && moveY < 0 ? 0 : moveY;
       moveY = dir.y > 0 && moveY > 0 ? 0 : moveY;
+
+      println(dir.x + " : " + dir.y);
     }
   }
 }
